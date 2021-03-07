@@ -371,10 +371,10 @@ transmitted = atol(list[10]);	/* Kernel v2.1.119 */
 #endif
 
 if (received != formerReceived) {
-	led(NUMLOCKLED, SET, DELAYED);
+	led(CAPSLOCKLED, SET, DELAYED);
 	formerReceived = received;
 } else {
-	led(NUMLOCKLED, CLEAR, DELAYED);
+	led(CAPSLOCKLED, CLEAR, DELAYED);
 }
 
 if (transmitted != formerTransmitted) {
@@ -433,11 +433,11 @@ if (myDisplay) {
 			else
 				ledVal &= ~LED_SCR;
 			break;
-		case NUMLOCKLED:
+		case CAPSLOCKLED:
 			if (mode == SET)
-				ledVal |= LED_NUM;
+				ledVal |= LED_CAP;
 			else
-				ledVal &= ~LED_NUM;
+				ledVal &= ~LED_CAP;
 			break;
 		default:
 			perror("tleds: wrong led-value");
@@ -473,35 +473,38 @@ return (mode & KD_GRAPHICS);
 
 ulong	correct_caps (ulong ledVal)
 {
-static int	remindVTRound = 0;
-struct vt_stat	vtStat;
-int		currentVT;
-ulong		flagVal;
+/*
+static int     remindVTRound = 0;
+struct vt_stat vtStat;
+int            currentVT;
+ulong          flagVal;
 
-currentVT = open(CURRENTTTY, O_RDONLY); /* Blah, only for root. */
+currentVT = open(CURRENTTTY, O_RDONLY); // Blah, only for root. 
 if (-1 != currentVT) {
-	if (! ioctl(currentVT, KDGKBLED, &flagVal)
-	    && ! ioctl(currentVT, VT_GETSTATE, &vtStat)) {
-		if (previousActive == --vtStat.v_active) {
-			if (is_on_X(currentVT)) {
-				ioctl(currentVT, KDGETLED, &flagVal);
-			}
-			if (flagVal & LED_CAP)
-				ledVal |= LED_CAP;
-			else
-				ledVal &= ~LED_CAP;
-			ttyLEDs[previousActive] = (char)ledVal;
-		} else {
-			previousActive = vtStat.v_active;
-			ledVal = (ulong)ttyLEDs[previousActive];
-		}
-	}
-	if(remindVTRound++ > remindVTcoef) {
-		remindVTRound = 0;
-		detach_vt_leds(currentVT, TRUE);
-	}
-	close(currentVT);
+       if (! ioctl(currentVT, KDGKBLED, &flagVal)
+           && ! ioctl(currentVT, VT_GETSTATE, &vtStat)) {
+               if (previousActive == --vtStat.v_active) {
+                       if (is_on_X(currentVT)) {
+                               ioctl(currentVT, KDGETLED, &flagVal);
+                       }
+                       if (flagVal & LED_CAP)
+                               ledVal |= LED_CAP;
+                       else
+                               ledVal &= ~LED_CAP;
+                       ttyLEDs[previousActive] = (char)ledVal;
+               } else {
+                       previousActive = vtStat.v_active;
+                       ledVal = (ulong)ttyLEDs[previousActive];
+              }
+       }
+       if(remindVTRound++ > remindVTcoef) {
+               remindVTRound = 0;
+               detach_vt_leds(currentVT, TRUE);
+       }
+       close(currentVT);
+
 }
+*/
 return ledVal;
 }
 
@@ -519,7 +522,8 @@ if (ioctl(tty, KDGETLED, &ledVal)) {
 	return 0;
 }
 ledVal &= ~LED_SCR;
-ledVal &= ~LED_NUM;
+ledVal &= ~LED_CAP;
+//ledVal &= ~LED_NUM;
 if (!wantDetach && !is_on_X(tty)) {
 	ioctl(tty, KDGKBLED, &ledVal);
 	ledVal |= 0x08;	/* Reattach. */
@@ -573,7 +577,7 @@ if (opt_b && ! opt_q)
 	printf("Bye-Bye !\n");
 if (myDisplay) {
 #if (! REMOVE_X_CODE)
-	clear_led(NUMLOCKLED);
+	clear_led(CAPSLOCKLED);
 	clear_led(SCROLLLOCKLED);
 	XCloseDisplay(myDisplay);	/* X */
 #endif
